@@ -23,5 +23,5 @@ jobs:
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tgju_gold_app3
-          path: dist/tgju_gold_app3.exe
+          name: app3
+          path: dist/app3.exe
