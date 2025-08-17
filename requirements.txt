@@ -1,5 +1,4 @@
 ttkbootstrap
-tk_jalali_calendar
 jdatetime
 requests
 pandas
