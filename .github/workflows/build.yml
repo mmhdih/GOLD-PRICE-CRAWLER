@@ -18,10 +18,10 @@ jobs:
 
       - name: Package with PyInstaller
         run: |
-          pyinstaller --onefile --noconsole tgju_gold_app.py
+          pyinstaller --onefile --noconsole app3.py
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tgju_gold_app
-          path: dist/tgju_gold_app.exe
+          name: app3
+          path: dist/app3.exe
