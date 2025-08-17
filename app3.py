@@ -1,8 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
-import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from tk_jalali_calendar import Calendar
+from tkinter import ttk, messagebox, filedialog
 import threading
 import re
 import time
@@ -14,9 +11,6 @@ from bs4 import BeautifulSoup
 
 # --- کلاس TGJUGoldFetcher: منطق استخراج داده (بدون تغییر) ---
 class TGJUGoldFetcher:
-    """
-    این کلاس مسئولیت استخراج، پردازش و ذخیره داده‌ها از وب‌سایت TGJU را بر عهده دارد.
-    """
     HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     def __init__(self, status_callback=None):
@@ -43,7 +37,6 @@ class TGJUGoldFetcher:
             end_gregorian_date = end_jalali_date.togregorian()
 
             self._update_status(f"در حال جمع‌آوری داده‌ها از {start_jalali_str} تا {end_jalali_str}...")
-
             all_data = []
             page = 1
             reached_start_date_in_history = False 
@@ -60,9 +53,7 @@ class TGJUGoldFetcher:
                 soup = BeautifulSoup(html, "html.parser")
                 rows = soup.findAll("tr")
                 
-                if not rows and page > 1:
-                    break
-
+                if not rows and page > 1: break
                 page_processed_any_data_row = False
                 
                 for r in rows:
@@ -76,8 +67,7 @@ class TGJUGoldFetcher:
                         if gdate < start_gregorian_date:
                             reached_start_date_in_history = True
                             break
-                        if gdate > end_gregorian_date:
-                            continue
+                        if gdate > end_gregorian_date: continue
 
                         try:
                             high = int(cols[1])
@@ -88,9 +78,7 @@ class TGJUGoldFetcher:
                             self._update_status(f"هشدار: داده نامعتبر در تاریخ {gdate}. نادیده گرفته شد.")
                             continue
                 
-                if reached_start_date_in_history or (not page_processed_any_data_row and page > 1):
-                    break
-
+                if reached_start_date_in_history or (not page_processed_any_data_row and page > 1): break
                 page += 1
                 time.sleep(0.5)
 
@@ -131,119 +119,65 @@ class TGJUGoldFetcher:
             self._update_status(f"خطا: {e}")
             return False
 
-# --- کلاس GoldApp: رابط کاربری جدید و مدرن ---
+# --- کلاس GoldApp: رابط کاربری استاندارد Tkinter ---
 class GoldApp:
     def __init__(self, master):
         self.master = master
-        master.title("استخراج هوشمند قیمت طلا")
-        master.geometry("600x450")
+        master.title("استخراج قیمت طلا از TGJU")
+        master.geometry("500x350")
         master.resizable(False, False)
 
         self.fetcher = TGJUGoldFetcher(self.update_status)
         self.current_thread = None
 
-        # متغیرهایی برای نگهداری تاریخ‌های انتخاب شده
-        self.start_date = jdatetime.date(1403, 1, 1)
-        self.end_date = jdatetime.date.today()
-
         self._create_widgets()
 
     def _create_widgets(self):
-        main_frame = ttk.Frame(self.master, padding=20)
-        main_frame.pack(fill=BOTH, expand=YES)
+        main_frame = ttk.Frame(self.master, padding="10")
+        main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # --- بخش ورودی‌ها ---
-        input_frame = ttk.Labelframe(main_frame, text="تنظیمات استخراج", padding=15)
-        input_frame.pack(fill=X, pady=(0, 10))
-        input_frame.grid_columnconfigure(1, weight=1)
-
-        # ورودی URL
-        ttk.Label(input_frame, text="آدرس صفحه (URL):").grid(row=0, column=0, padx=5, pady=10, sticky="w")
-        self.url_entry = ttk.Entry(input_frame, bootstyle="primary")
-        self.url_entry.grid(row=0, column=1, columnspan=2, padx=5, pady=10, sticky="ew")
+        ttk.Label(main_frame, text="آدرس صفحه (URL):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.url_entry = ttk.Entry(main_frame)
+        self.url_entry.grid(row=0, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
         self.url_entry.insert(0, "https://english.tgju.org/profile/sekee")
 
-        # انتخابگر تاریخ
-        ttk.Label(input_frame, text="بازه زمانی:").grid(row=1, column=0, padx=5, pady=10, sticky="w")
-        
-        date_btn_frame = ttk.Frame(input_frame)
-        date_btn_frame.grid(row=1, column=1, columnspan=2, sticky=EW)
-        
-        self.start_date_btn = ttk.Button(date_btn_frame, text=f"از تاریخ: {self.start_date}", command=self._select_start_date, bootstyle="outline-info")
-        self.start_date_btn.pack(side=RIGHT, expand=YES, fill=X, padx=(5,0))
+        ttk.Label(main_frame, text="تاریخ شروع (مثال: 1403-01-01):").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.start_date_entry = ttk.Entry(main_frame)
+        self.start_date_entry.grid(row=1, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.start_date_entry.insert(0, jdatetime.date(1403, 1, 1).isoformat())
 
-        self.end_date_btn = ttk.Button(date_btn_frame, text=f"تا تاریخ: {self.end_date}", command=self._select_end_date, bootstyle="outline-info")
-        self.end_date_btn.pack(side=RIGHT, expand=YES, fill=X, padx=(0,5))
+        ttk.Label(main_frame, text="تاریخ پایان (مثال: 1404-05-31):").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.end_date_entry = ttk.Entry(main_frame)
+        self.end_date_entry.grid(row=2, column=1, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.end_date_entry.insert(0, jdatetime.date.today().isoformat()) 
 
-        # مسیر خروجی فایل
-        ttk.Label(input_frame, text="مسیر ذخیره فایل:").grid(row=2, column=0, padx=5, pady=10, sticky="w")
-        self.output_path_entry = ttk.Entry(input_frame, bootstyle="primary")
-        self.output_path_entry.grid(row=2, column=1, padx=5, pady=10, sticky="ew")
+        ttk.Label(main_frame, text="مسیر ذخیره فایل اکسل:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        self.output_path_entry = ttk.Entry(main_frame)
+        self.output_path_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
         self.output_path_entry.insert(0, "gold_prices.xlsx")
 
-        self.browse_button = ttk.Button(input_frame, text="مرور", command=self.browse_output_path, bootstyle="secondary")
-        self.browse_button.grid(row=2, column=2, padx=5, pady=10)
+        self.browse_button = ttk.Button(main_frame, text="مرور", command=self.browse_output_path)
+        self.browse_button.grid(row=3, column=2, padx=5, pady=5)
 
-        # --- بخش عملیات ---
-        action_frame = ttk.Frame(main_frame)
-        action_frame.pack(fill=X, pady=10)
-        action_frame.grid_columnconfigure((0,1), weight=1)
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=4, column=0, columnspan=3, pady=10)
 
-        self.start_button = ttk.Button(action_frame, text="شروع استخراج", command=self.start_fetching, bootstyle="success")
-        self.start_button.grid(row=0, column=0, padx=5, sticky="ew")
+        self.start_button = ttk.Button(button_frame, text="شروع استخراج", command=self.start_fetching)
+        self.start_button.pack(side=tk.LEFT, padx=5)
 
-        self.stop_button = ttk.Button(action_frame, text="توقف", command=self.stop_fetching, state=DISABLED, bootstyle="danger-outline")
-        self.stop_button.grid(row=0, column=1, padx=5, sticky="ew")
+        self.stop_button = ttk.Button(button_frame, text="توقف", command=self.stop_fetching, state=tk.DISABLED)
+        self.stop_button.pack(side=tk.LEFT, padx=5)
 
-        # --- بخش وضعیت ---
-        status_frame = ttk.Labelframe(main_frame, text="وضعیت عملیات", padding=10)
-        status_frame.pack(fill=BOTH, expand=YES)
-        
-        self.progress_bar = ttk.Progressbar(status_frame, mode='indeterminate', bootstyle="info-striped")
-        self.progress_bar.pack(fill=X, padx=5, pady=5, expand=YES)
+        self.status_label = ttk.Label(main_frame, text="آماده به کار", wraplength=480, justify="right", foreground="blue")
+        self.status_label.grid(row=5, column=0, columnspan=3, padx=5, pady=10, sticky="ew")
 
-        self.status_label = ttk.Label(status_frame, text="آماده به کار", anchor="center")
-        self.status_label.pack(fill=X, padx=5, pady=5, expand=YES)
-
-    def _select_date(self, is_start_date):
-        """پنجره انتخابگر تاریخ را باز کرده و تاریخ انتخاب شده را برمی‌گرداند."""
-        top = ttk.Toplevel(self.master)
-        top.title("انتخاب تاریخ")
-        
-        selected_date = None
-        
-        cal = Calendar(top)
-        cal.pack(pady=10, padx=10)
-
-        def on_select():
-            nonlocal selected_date
-            greg_date = cal.get_date()
-            selected_date = jdatetime.date.fromgregorian(date=greg_date)
-            top.destroy()
-
-        ttk.Button(top, text="انتخاب", command=on_select, bootstyle="primary").pack(pady=10)
-        
-        self.master.wait_window(top) # منتظر می‌ماند تا پنجره انتخابگر بسته شود
-
-        if selected_date:
-            if is_start_date:
-                self.start_date = selected_date
-                self.start_date_btn.config(text=f"از تاریخ: {self.start_date}")
-            else:
-                self.end_date = selected_date
-                self.end_date_btn.config(text=f"تا تاریخ: {self.end_date}")
-
-    def _select_start_date(self):
-        self._select_date(is_start_date=True)
-
-    def _select_end_date(self):
-        self._select_date(is_start_date=False)
+        main_frame.grid_columnconfigure(1, weight=1)
 
     def update_status(self, message):
         self.master.after(0, lambda: self.status_label.config(text=message))
 
     def browse_output_path(self):
-        filepath = tk.filedialog.asksaveasfilename(
+        filepath = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
             filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
             initialfile=self.output_path_entry.get()
@@ -254,46 +188,46 @@ class GoldApp:
 
     def start_fetching(self):
         base_url = self.url_entry.get().strip()
+        start_date_str = self.start_date_entry.get().strip()
+        end_date_str = self.end_date_entry.get().strip()
         output_filepath = self.output_path_entry.get().strip()
 
-        if not base_url or not output_filepath:
-            messagebox.showerror("خطای ورودی", "لطفا تمام فیلدها را پر کنید.", parent=self.master)
+        if not all([base_url, start_date_str, end_date_str, output_filepath]):
+            messagebox.showerror("خطا", "لطفا تمام فیلدها را پر کنید.")
             return
-        
-        self.start_button.config(state=DISABLED)
-        self.stop_button.config(state=NORMAL)
-        self.progress_bar.start()
+
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", start_date_str) or \
+           not re.match(r"^\d{4}-\d{2}-\d{2}$", end_date_str):
+            messagebox.showerror("خطا", "لطفا تاریخ را با فرمت صحیح YYYY-MM-DD وارد کنید.")
+            return
+
+        self.start_button.config(state=tk.DISABLED)
+        self.stop_button.config(state=tk.NORMAL)
         self.update_status("شروع عملیات استخراج...")
 
-        self.current_thread = threading.Thread(
-            target=self._run_fetching_thread, 
-            args=(base_url, self.start_date.isoformat(), self.end_date.isoformat(), output_filepath)
-        )
+        self.current_thread = threading.Thread(target=self._run_fetching_thread, args=(base_url, start_date_str, end_date_str, output_filepath))
         self.current_thread.start()
 
     def _run_fetching_thread(self, base_url, start_date_str, end_date_str, output_filepath):
         success = self.fetcher.fetch_data(base_url, start_date_str, end_date_str, output_filepath)
         
-        self.master.after(0, self.reset_ui)
+        self.master.after(0, self.reset_buttons)
         
         if success:
             self.master.after(0, lambda: messagebox.showinfo("پایان عملیات", "داده‌ها با موفقیت استخراج شدند."))
         elif not self.fetcher.stop_flag:
             self.master.after(0, lambda: messagebox.showerror("خطا", "عملیات با خطا مواجه شد."))
 
-    def reset_ui(self):
-        """UI را به حالت اولیه برمی‌گرداند."""
-        self.start_button.config(state=NORMAL)
-        self.stop_button.config(state=DISABLED)
-        self.progress_bar.stop()
+    def reset_buttons(self):
+        self.start_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
 
     def stop_fetching(self):
         if self.current_thread and self.current_thread.is_alive():
             self.fetcher.stop()
-            self.stop_button.config(state=DISABLED)
+            self.stop_button.config(state=tk.DISABLED)
             self.update_status("درخواست توقف ارسال شد...")
-            
-# --- نقطه شروع برنامه ---
+
 if __name__ == "__main__":
     try:
         requests.get("https://www.google.com", timeout=5)
@@ -303,7 +237,6 @@ if __name__ == "__main__":
         messagebox.showerror("خطای اتصال", "لطفاً اتصال اینترنت خود را بررسی کنید.")
         exit()
 
-    # استفاده از تم مدرن "lumen" از ttkbootstrap
-    root = ttk.Window(themename="lumen")
+    root = tk.Tk()
     app = GoldApp(root)
     root.mainloop()
