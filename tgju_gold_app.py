@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 # --- کلاس TGJUGoldFetcher: منطق استخراج داده ---
 class TGJUGoldFetcher:
-    BASE_URL = "https://english.tgju.org/profile/geram18"
+    BASE_URL = "https://english.tgju.org/profile/sekee"
     HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     def __init__(self, status_callback=None):
