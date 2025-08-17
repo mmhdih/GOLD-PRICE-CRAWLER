@@ -24,8 +24,8 @@ jobs:
 
       - name: Package with PyInstaller
         run: |
-          # اضافه کردن jdatetime به عنوان یک ماژول پنهان
-          pyinstaller --onefile --noconsole --hidden-import jdatetime app3.py
+          # استفاده از --collect-all برای اطمینان از گنجاندن کامل کتابخانه
+          pyinstaller --onefile --noconsole --collect-all jdatetime app3.py
           
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
