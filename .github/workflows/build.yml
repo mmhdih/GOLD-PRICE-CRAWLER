@@ -1,0 +1,27 @@
+name: Build-EXE
+on: [push, workflow_dispatch]          # روی هر push یا اجرای دستی
+jobs:
+  windows-build:
+    runs-on: windows-latest            # رانر رسمی ویندوز
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5  # نصب پایتون
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt   # اگر دارید
+          pip install pyinstaller
+
+      - name: Package with PyInstaller
+        run: |
+          pyinstaller --onefile --noconsole gui_tgju_gold.py
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold_gui_exe
+          path: dist/gui_tgju_gold.exe
