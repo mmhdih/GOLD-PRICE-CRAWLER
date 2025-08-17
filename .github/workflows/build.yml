@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # پایتون 3.9 برای پایداری حفظ شده است
+          # استفاده از پایتون 3.9 برای پایداری و سازگاری کامل
           python-version: '3.9'
 
       - name: Install Python dependencies
@@ -24,8 +24,8 @@ jobs:
 
       - name: Package with PyInstaller
         run: |
-          # استفاده از --collect-all برای اطمینان از گنجاندن کامل کتابخانه
-          pyinstaller --onefile --noconsole --collect-all jdatetime app3.py
+          # دستور کامل برای جمع‌آوری تمام داده‌های کتابخانه‌های مورد نیاز
+          pyinstaller --onefile --noconsole --collect-all ttkbootstrap --collect-all jdatetime app3.py
           
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
